@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="res"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/pasa_cbentley_core_src4"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/pasa_cbentley_core_src5"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/pasa_cbentley_core_src8"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/pasa_cbentley_swing"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/pasa_jtattoo"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
