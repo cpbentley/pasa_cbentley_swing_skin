@@ -539,6 +539,10 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
       return menuRoot;
    }
 
+   public void guiUpdate() {
+      //nothing to do since all ui components are automatically updated
+   }
+   
    /**
     * Put the LnF that work well here
     */

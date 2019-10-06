@@ -1,5 +1,6 @@
 package pasa.cbentley.swing.skin.ctx;
 
+import java.util.List;
 import java.util.prefs.Preferences;
 
 import pasa.cbentley.core.src4.ctx.ACtx;
@@ -21,6 +22,10 @@ public class SwingSkinCtx extends ACtx {
 
    public IPrefs getUIPref() {
       return sc.getPrefs();
+   }
+
+   public void addI18NKey(List<String> list) {
+      list.add("i18nSwingSkin");
    }
 
 }
