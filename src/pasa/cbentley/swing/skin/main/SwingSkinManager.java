@@ -651,28 +651,25 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
                AbstractLookAndFeel alf = (AbstractLookAndFeel) c.newInstance();
                List listThemes = alf.getMyThemes();
                JMenu menu = null;
-               int count = 0;
                //all jtattoo themes have several themes
                for (Iterator iterator = listThemes.iterator(); iterator.hasNext();) {
                   String theme = (String) iterator.next();
-                  JRadioButtonMenuItem buttonTheme = new JRadioButtonMenuItem(theme);
-                  lafButtonGroup.add(buttonTheme);
-
-                  //get the action
-                  LafAction action = getAction(lafName, theme);
-                  menu = action.getActionRootMenu();
-                  if (lafClassName.equals(initNameLookFeelClass) && theme.equals(initNameTheme)) {
-                     menu.setIcon(iconSelection);
-                     buttonTheme.setSelected(true);
-                     currentAction = action;
-                  }
-                  menu.add(buttonTheme);
-                  buttonTheme.setAction(action);
-                  myLafActions.add(action);
-                  //add a separator every 4
-                  count++;
-                  if (count % 4 == 0) {
+                  if (theme.equals(AbstractLookAndFeel.THEME_SEPARATOR)) {
                      menu.addSeparator();
+                  } else {
+                     JRadioButtonMenuItem buttonTheme = new JRadioButtonMenuItem(theme);
+                     lafButtonGroup.add(buttonTheme);
+                     //get the action
+                     LafAction action = getAction(lafName, theme);
+                     menu = action.getActionRootMenu();
+                     if (lafClassName.equals(initNameLookFeelClass) && theme.equals(initNameTheme)) {
+                        menu.setIcon(iconSelection);
+                        buttonTheme.setSelected(true);
+                        currentAction = action;
+                     }
+                     menu.add(buttonTheme);
+                     buttonTheme.setAction(action);
+                     myLafActions.add(action);
                   }
                }
                lookAndFeelMenu.add(menu);
