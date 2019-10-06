@@ -5,11 +5,14 @@
  */
 package pasa.cbentley.swing.skin.main;
 
+import static java.awt.event.KeyEvent.VK_R;
+
 import java.awt.Component;
 import java.awt.Frame;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -18,7 +21,6 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.prefs.Preferences;
 
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ButtonGroup;
 import javax.swing.Icon;
@@ -27,10 +29,14 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
+import javax.swing.KeyStroke;
 import javax.swing.LookAndFeel;
+import javax.swing.MenuElement;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import javax.swing.plaf.metal.MetalLookAndFeel;
@@ -45,7 +51,13 @@ import pasa.cbentley.core.src4.logging.Dctx;
 import pasa.cbentley.core.src4.logging.IDLog;
 import pasa.cbentley.core.src4.logging.IStringable;
 import pasa.cbentley.core.src4.logging.ITechLvl;
+import pasa.cbentley.swing.ctx.SwingCtx;
+import pasa.cbentley.swing.menu.ITechMenu;
+import pasa.cbentley.swing.skin.ctx.ITechPrefsSwingSkin;
+import pasa.cbentley.swing.skin.ctx.ITechStringsSwingSkin;
 import pasa.cbentley.swing.skin.ctx.SwingSkinCtx;
+import pasa.cbentley.swing.widgets.b.BMenu;
+import pasa.cbentley.swing.widgets.b.BMenuItem;
 
 /**
  * Integrates Themes and JTattoo into a {@link JFrame} based application and its {@link JMenuBar}.
@@ -88,155 +100,35 @@ import pasa.cbentley.swing.skin.ctx.SwingSkinCtx;
  * @version 1.0
  *
  */
-public class SwingSkinManager implements ActionListener, MenuListener, IStringable {
+public class SwingSkinManager implements ActionListener, MenuListener, IStringable, ITechStringsSwingSkin, ITechPrefsSwingSkin, ITechMenu {
 
-   /**
-    * Each Theme menu items will be represented by a {@link LafAction}.
-    * @author Charles Bentley
-    *
-    */
-   public class LafAction extends AbstractAction {
+   public class LafCombo {
 
-      /**
-       * 
-       */
-      private static final long         serialVersionUID = -2891206240367644231L;
+      private String name;
 
-      private AbstractLookAndFeel       alf;
+      private String path;
 
-      private UIManager.LookAndFeelInfo laf;
-
-      private JMenu                     menu;
-
-      private String                    theme;
-
-      /**
-       * 
-       * @param laf
-       * @param menu the {@link JMenu} that will hold this action
-       * @throws NullPointerException if laf is null
-       */
-      public LafAction(UIManager.LookAndFeelInfo laf, JMenu menu) {
-         super(laf.getName());
-         this.laf = laf;
-         this.menu = menu;
+      public LafCombo(String path, String name) {
+         this.setPath(path);
+         this.setName(name);
       }
 
-      /**
-       * 
-       * @param laf
-       * @param theme theme String
-       * @param alf the {@link AbstractLookAndFeel}
-       * @param menu the {@link JMenu} that will hold this action
-       * @throws NullPointerException if laf is null
-       */
-      public LafAction(UIManager.LookAndFeelInfo laf, String theme, AbstractLookAndFeel alf, JMenu menu) {
-         super(laf.getName() + (theme != null ? (" " + theme) : ""));
-         this.laf = laf;
-         this.theme = theme;
-         this.alf = alf;
-         this.menu = menu;
+      public String getName() {
+         return name;
       }
 
-      /**
-       * 
-       */
-      public void actionPerformed(ActionEvent e) {
-         //System.out.println("LafAction#actionPerformed " + theme);
-         executeSetMyLafTheme();
+      public String getPath() {
+         return path;
       }
 
-      void executeSetMyLafTheme() {
-         if (theme != null && alf != null) {
-            alf.setMyTheme(theme);
-         }
-         setApplicationLookAndFeel(laf.getClassName());
-         JMenu newMenuSelected = getActionRootMenu();
-         //clear menu of current action
-         if (currentAction != null) {
-            currentAction.getActionRootMenu().setIcon(null);
-         }
-         if (currentActionFav != null) {
-            currentActionFav.getActionRootMenu().setIcon(null);
-            //also deselects the radio button
-
-         }
-         //there might be several
-         if (newMenuSelected != null) {
-            newMenuSelected.setIcon(iconSelection);
-         }
-         //iterate over all menu and set the right icons.
-         if (newMenuSelected == menuFav) {
-            syncReal(this); //
-            currentActionFav = this;
-         } else {
-            //we must clear favs so that when go from fav to regular, selection deselects. setSelected(false) does not work bug?
-            lafButtonGroupFav.clearSelection();
-            syncFav(this);
-            currentAction = this;
-         }
+      public void setName(String name) {
+         this.name = name;
       }
 
-      public JMenu getActionRootMenu() {
-         return menu;
+      public void setPath(String path) {
+         this.path = path;
       }
-
-      public UIManager.LookAndFeelInfo getInfo() {
-         return laf;
-      }
-
-      public boolean isLf(String lf) {
-         return laf.getClassName().equals(lf);
-      }
-
-      public boolean isMatch(LafAction action) {
-         return isMatch(action.laf.getName(), action.theme);
-      }
-
-      public boolean isMatch(String lafName, String theme2) {
-         if (lafName.equals(laf.getName())) {
-            if (theme == null && theme2 == null) {
-               return true;
-            } else if (theme != null && theme2 != null) {
-               return theme.equals(theme2);
-            }
-         }
-         return false;
-      }
-
    }
-
-   public static final String BUNDLE_KEY_FAV         = "menu.lookandfeel.favorite";
-
-   public static final String BUNDLE_KEY_FAV_ADD     = "menu.lookandfeel.addfavorite";
-
-   public static final String BUNDLE_KEY_FAV_REMOVE  = "menu.lookandfeel.removefavorite";
-
-   public static final String BUNDLE_KEY_MAIN_MENU   = "menu.lookandfeel.main";
-
-   public static final String BUNDLE_KEY_OTHERS      = "menu.lookandfeel.others";
-
-   public static final String BUNDLE_KEY_SYSTEM      = "menu.lookandfeel.system";
-
-   /**
-    * Key String for {@link Preferences}
-    */
-   public static final String PREF_LOOKANDFEEL       = "LookAndFeel";
-
-   /**
-    * Key for listing Look/Theme favorite
-    * <br>
-    * Its a big String with 
-    */
-   public static final String PREF_LOOKANDFEEL_FAV   = "LookAndFeelFavs";
-
-   public static final String PREF_LOOKANDFEEL_FLAG  = "LookAndFeelFlag";
-
-   /**
-    * Theme Key String for {@link Preferences}
-    */
-   public static final String PREF_LOOKANDFEEL_THEME = "LookAndFeelTheme";
-
 
    /**
     * Current active Laf as an {@link Action}.
@@ -261,9 +153,9 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
 
    private String               initThemeName;
 
-   private JMenuItem            jmiFavAdd;
+   private BMenuItem            jmiFavAdd;
 
-   private JMenuItem            jmiFavRemove;
+   private BMenuItem            jmiFavRemove;
 
    /**
     * 
@@ -272,22 +164,32 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
 
    private ButtonGroup          lafButtonGroupFav;
 
-   private JMenu                menuFav;
+   private ArrayList<LafCombo>  listTatoos;
 
-   private JMenu                menuOthers;
+   private BMenu                menuFav;
 
-   private JMenu                menuRoot;
+   private BMenu                menuOthers;
 
-   private JMenu                menuSystem;
+   private BMenu                menuRoot;
+
+   private BMenu                menuSystem;
 
    /**
     * Collection of all LAF actions
     */
    private ArrayList<LafAction> myLafActions = new ArrayList<>();
 
-   private SwingSkinCtx       ssc;
+   private boolean              isUsingDefaultKeyShortcuts;
 
-   private ArrayList<LafCombo>  listTatoos;
+   protected final SwingSkinCtx ssc;
+
+   protected final SwingCtx     sc;
+
+   private BMenuItem            itemFontIncrease;
+
+   private BMenuItem            itemFontDecrease;
+
+   private BMenuItem            itemRandom;
 
    /**
     * Upon creation, module looks for installed/accessible look and feels.
@@ -295,13 +197,14 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
     */
    public SwingSkinManager(SwingSkinCtx ssc) {
       this.ssc = ssc;
-
+      this.sc = ssc.getSwingCtx();
       //the very first thing we need to do is read the preference and set the look and feel
       prefsInit();
 
       //the initialization of menu must be done after the lookandfeel preference has been loaded
       //otherwise the first look for those menu will be metal
-      menuRoot = new JMenu("Skins");
+      menuRoot = new BMenu(sc, sMainMenu);
+      menuRoot.setMnemonic(KeyEvent.VK_K);
       menuRoot.addMenuListener(this); //if menu activated with the keyboard
       //when using the most common case.. use a thread to smooth out user experience
       menuRoot.addMouseListener(new MouseAdapter() {
@@ -311,22 +214,32 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
          }
       });
 
+   }
+
+   private void initMenuMain() {
       //first build the menu for the system look and feels
-      menuSystem = new JMenu("System");
-      menuOthers = new JMenu("Others");
-      menuFav = new JMenu("Favorites");
+      menuSystem = new BMenu(sc, sSystemLnF);
+      menuOthers = new BMenu(sc, sOthers);
+      menuFav = new BMenu(sc, sFavorite);
 
-      jmiFavRemove = new JMenuItem("Remove current skin from favorites");
-      jmiFavRemove.addActionListener(this);
+      jmiFavRemove = new BMenuItem(sc, this, sRemovefavorite);
 
-      jmiFavAdd = new JMenuItem("Add current skin to favorites");
-      jmiFavAdd.addActionListener(this);
+      jmiFavAdd = new BMenuItem(sc, this, sAddfavorite);
+
+      itemFontIncrease = new BMenuItem(sc, this, sFontIncrease);
+      itemFontDecrease = new BMenuItem(sc, this, sFontDecrease);
+      itemRandom = new BMenuItem(sc, this, sRandom);
+
+      if (isUsingDefaultKeyShortcuts) {
+         itemFontIncrease.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, modAlt));
+         itemFontDecrease.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, modAlt));
+         itemRandom.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, modAlt));
+      }
 
       menuFav.add(jmiFavAdd);
       menuFav.add(jmiFavRemove);
       menuFav.addSeparator();
-      //list favorite here
-      installSome();
+
    }
 
    /**
@@ -334,106 +247,59 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
     * <br>
     */
    public void actionPerformed(ActionEvent e) {
-      if (e.getSource() == jmiFavAdd) {
-         //get current
-         if (currentAction != null) {
-            //check if already in the list
-            JMenuItem item = getActionFavMatch(currentAction);
-            if (item == null) {
-               //create a new lafaction with menufav as root menu
-               LafAction la = new LafAction(currentAction.laf, currentAction.theme, currentAction.alf, menuFav);
-               //not in the list
-               JRadioButtonMenuItem rbm = new JRadioButtonMenuItem(la);
-               lafButtonGroupFav.add(rbm);
-               menuFav.add(rbm);
-               menuFav.setIcon(iconSelection);
-               //refresh
-               lafButtonGroupFav.clearSelection();
-               rbm.setSelected(true);
-               menuFav.repaint();
-            }
-         }
-      } else if (e.getSource() == jmiFavRemove) {
-         JMenuItem item = getActionFavMatch(currentAction);
-         if (item != null) {
-            lafButtonGroupFav.remove(item);
-            lafButtonGroupFav.clearSelection();
-            menuFav.remove(item);
-            menuFav.setIcon(null);
-            menuFav.repaint();
-            //update the favorite string
-         }
+      Object src = e.getSource();
+      if (src == jmiFavAdd) {
+         cmdFavoriteAdd();
+      } else if (src == jmiFavRemove) {
+         cmdFavoriteRemove();
+      } else if (src == itemFontDecrease) {
+         cmdFontSizeDecrease();
+      } else if (src == itemFontIncrease) {
+         cmdFontSizeIncrease();
+      } else if (src == itemRandom) {
+         cmdRandomSet();
       }
    }
 
-   private JMenuItem getActionFavMatch(LafAction ac) {
-      int num = menuFav.getItemCount();
-      for (int i = 0; i < num; i++) {
-         JMenuItem ji = menuFav.getItem(i);
-         if (ji instanceof JRadioButtonMenuItem) {
-            LafAction action = (LafAction) ji.getAction();
-            if (ac.isMatch(action)) {
-               return ji;
-            }
-         }
+   public void cmdFavoriteRemove() {
+      JMenuItem item = getActionFavMatch(currentAction);
+      if (item != null) {
+         lafButtonGroupFav.remove(item);
+         lafButtonGroupFav.clearSelection();
+         menuFav.remove(item);
+         menuFav.setIcon(null);
+         menuFav.repaint();
+         //update the favorite string
+
+         prefsSave();
       }
-      return null;
    }
 
-   public void setRandomLAF() {
+   public void cmdFavoriteAdd() {
+      //get current
       if (currentAction != null) {
-         checkPopulateRootMenu(); //make sure actions are loaded
-         int rIndex = ssc.getUCtx().getRandom().nextInt(myLafActions.size());
-         LafAction action = myLafActions.get(rIndex);
-         action.executeSetMyLafTheme();
-      }
-   }
-
-   /**
-    * Try to increase Font size of look and feel if possible
-    */
-   public boolean cmdFontSizeIncrease() {
-      checkPopulateRootMenu();
-
-      JMenu m = (JMenu) currentAction.menu.getParent();
-      Component[] menuComponents = m.getMenuComponents();
-      for (int i = 0; i < menuComponents.length; i++) {
-         if (menuComponents[i] == currentAction.menu) {
-            //we found it.. increase by going up IF not a separator
-            if (i + 1 < menuComponents.length) {
-               return setLafActionIfMenuItem(menuComponents[i + 1]);
-            }
+         //check if already in the list
+         JMenuItem item = getActionFavMatch(currentAction);
+         if (item == null) {
+            //create a new lafaction with menufav as root menu
+            LookAndFeelInfo laf = currentAction.getInfo();
+            AbstractLookAndFeel alf = currentAction.getAbstractLookAndFeel();
+            String theme = currentAction.getTheme();
+            LafAction lafAction = new LafAction(ssc, this, laf, theme, alf, menuFav);
+            //not in the list
+            JRadioButtonMenuItem rbm = new JRadioButtonMenuItem(lafAction);
+            lafButtonGroupFav.add(rbm);
+            menuFav.add(rbm);
+            menuFav.setIcon(iconSelection);
+            //refresh
+            lafButtonGroupFav.clearSelection();
+            rbm.setSelected(true);
+            menuFav.repaint();
          }
-      }
-      return false;
-   }
 
-   private boolean setLafActionIfMenuItem(Component c) {
-      if (c instanceof JMenuItem) {
-         JMenuItem item = (JMenuItem) c;
-         Action itemAction = item.getAction();
-         if (itemAction instanceof LafAction) {
-            ((LafAction) itemAction).executeSetMyLafTheme();
-            return true;
-         }
+         //save on the spot
+         prefsSave();
       }
-      return false;
-   }
-
-   public boolean cmdFontSizeDecrease() {
-      checkPopulateRootMenu();
-
-      JMenu m = (JMenu) currentAction.menu.getParent();
-      Component[] menuComponents = m.getMenuComponents();
-      for (int i = 0; i < menuComponents.length; i++) {
-         if (menuComponents[i] == currentAction.menu) {
-            //we found it.. increase by going up IF not a separator
-            if (i - 1 >= 0) {
-               return setLafActionIfMenuItem(menuComponents[i - 1]);
-            }
-         }
-      }
-      return false;
    }
 
    /**
@@ -458,7 +324,7 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
          currentAction = action;
       }
       lafButtonGroup.add(buttonLaf);
-      action.menu.add(buttonLaf);
+      action.getMenu().add(buttonLaf);
    }
 
    private void addSeparator(JMenu menu, String lafClassName, String lastLafClassName) {
@@ -480,7 +346,63 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
    private void checkPopulateRootMenu() {
       if (menuRoot.getItemCount() == 0) {
          populateLookAndFeelMenu(menuRoot);
+         sc.guiUpdateOnChildrenMenu(menuRoot);
       }
+   }
+
+   public void cmdRandomSet() {
+      if (currentAction != null) {
+         checkPopulateRootMenu(); //make sure actions are loaded
+         int rIndex = ssc.getUCtx().getRandom().nextInt(myLafActions.size());
+         LafAction action = myLafActions.get(rIndex);
+         executeSetMyLafTheme(action);
+         syncReal(action); //sync the ui for new action
+      }
+   }
+
+   public boolean cmdFontSizeDecrease() {
+      return cmdFontSizeZipOver(1);
+   }
+
+   /**
+    * Separators 
+    * @param type
+    * @return
+    */
+   private boolean cmdFontSizeZipOver(int type) {
+      checkPopulateRootMenu();
+      JMenu m = currentAction.getMenu();
+      Component[] menuComponents = m.getMenuComponents();
+      for (int i = 0; i < menuComponents.length; i++) {
+         if (menuComponents[i] instanceof JRadioButtonMenuItem) {
+            JRadioButtonMenuItem radio = (JRadioButtonMenuItem) menuComponents[i];
+            if (radio.getAction() == currentAction) {
+               //we found it.. increase by going up IF not a separator
+               if (type == 0) {
+                  //increases
+                  if (i + 1 < menuComponents.length) {
+                     //might a Separator which will return false and stop
+                     Component componentUp = menuComponents[i + 1];
+                     return setLafActionIfMenuItem(componentUp);
+                  }
+               } else {
+                  //increases
+                  if (i - 1 >= 0) {
+                     Component componentDown = menuComponents[i - 1];
+                     return setLafActionIfMenuItem(componentDown);
+                  }
+               }
+            }
+         }
+      }
+      return false;
+   }
+
+   /**
+    * Try to increase Font size of look and feel if possible
+    */
+   public boolean cmdFontSizeIncrease() {
+      return cmdFontSizeZipOver(0);
    }
 
    /**
@@ -500,7 +422,7 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
                JMenu menu = new JMenu(laf.getName());
                for (Iterator iterator = listThemes.iterator(); iterator.hasNext();) {
                   String theme = (String) iterator.next();
-                  LafAction action = new LafAction(laf, theme, alf, menu);
+                  LafAction action = new LafAction(ssc, this, laf, theme, alf, menu);
                   myLafActions.add(action);
                }
             } catch (Exception e) {
@@ -513,11 +435,43 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
             } else {
                menu = menuOthers;
             }
-            LafAction action = new LafAction(laf, menu);
+            LafAction action = new LafAction(ssc, this, laf, menu);
             myLafActions.add(action);
          }
       }
 
+   }
+
+   public void executeSetMyLafTheme(LafAction action) {
+      AbstractLookAndFeel alf = action.getAbstractLookAndFeel();
+      if (action.getTheme() != null && alf != null) {
+         alf.setMyTheme(action.getTheme());
+      }
+      setApplicationLookAndFeel(action.getInfo().getClassName());
+      JMenu newMenuSelected = action.getMenu();
+      //clear menu of current action
+      if (currentAction != null) {
+         currentAction.getActionRootMenu().setIcon(null);
+      }
+      if (currentActionFav != null) {
+         currentActionFav.getActionRootMenu().setIcon(null);
+         //also deselects the radio button
+
+      }
+      //there might be several
+      if (newMenuSelected != null) {
+         newMenuSelected.setIcon(iconSelection);
+      }
+      //iterate over all menu and set the right icons.
+      if (newMenuSelected == menuFav) {
+         syncReal(action); //
+         currentActionFav = action;
+      } else {
+         //we must clear favs so that when go from fav to regular, selection deselects. setSelected(false) does not work bug?
+         lafButtonGroupFav.clearSelection();
+         syncFav(action);
+         currentAction = action;
+      }
    }
 
    private LafAction getAction(String lafName, String theme) {
@@ -530,40 +484,26 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
       return null;
    }
 
+   private JMenuItem getActionFavMatch(LafAction ac) {
+      int num = menuFav.getItemCount();
+      for (int i = 0; i < num; i++) {
+         JMenuItem ji = menuFav.getItem(i);
+         if (ji instanceof JRadioButtonMenuItem) {
+            LafAction action = (LafAction) ji.getAction();
+            if (ac.isMatch(action)) {
+               return ji;
+            }
+         }
+      }
+      return null;
+   }
+
    /**
     * Returns the current laf
     * @return
     */
    public String getCurrentLaf() {
       return currentLaf;
-   }
-
-   public class LafCombo {
-
-      private String path;
-
-      private String name;
-
-      public LafCombo(String path, String name) {
-         this.setPath(path);
-         this.setName(name);
-      }
-
-      public String getName() {
-         return name;
-      }
-
-      public void setName(String name) {
-         this.name = name;
-      }
-
-      public String getPath() {
-         return path;
-      }
-
-      public void setPath(String path) {
-         this.path = path;
-      }
    }
 
    public List<LafCombo> getLAFTatoos() {
@@ -642,10 +582,10 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
                LafAction actionFav = null;
                int indexDot = lookTheme.indexOf('.');
                if (indexDot == -1) {
-                  LafAction lag = getAction(lookTheme, null);
+                  LafAction lafAction = getAction(lookTheme, null);
                   //look up the existing
-                  if (lag != null) {
-                     actionFav = new LafAction(lag.laf, menuFav);
+                  if (lafAction != null) {
+                     actionFav = new LafAction(ssc, this, lafAction.getInfo(), menuFav);
                   }
                } else {
                   //split theme
@@ -654,10 +594,10 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
                   LafAction actionRegular = getAction(laf, theme);
                   //look up the existing
                   if (actionRegular != null) {
-                     actionFav = new LafAction(actionRegular.laf, theme, actionRegular.alf, menuFav);
+                     actionFav = new LafAction(ssc, this, actionRegular.getInfo(), theme, actionRegular.getAbstractLookAndFeel(), menuFav);
                   }
                   //check if init theme and the set cu
-                  String className = actionRegular.laf.getClassName();
+                  String className = actionRegular.getInfo().getClassName();
                   if (className.equals(initLookClassName) && theme.equals(initThemeName)) {
                      currentActionFav = actionFav;
                      currentActionFav.getActionRootMenu().setIcon(iconSelection);
@@ -693,6 +633,11 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
     * @param lookAndFeelMenu
     */
    private void populateLookAndFeelMenu(JMenu lookAndFeelMenu) {
+
+      initMenuMain();
+      //list favorite here
+      installSome();
+
       UIManager.LookAndFeelInfo[] lafsInstalled = UIManager.getInstalledLookAndFeels();
 
       //we create LafActions for all installed look and feels and their themes
@@ -701,6 +646,11 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
       //add the favorite menu
       lookAndFeelMenu.add(menuFav);
       lookAndFeelMenu.add(menuSystem);
+      lookAndFeelMenu.addSeparator();
+      lookAndFeelMenu.add(itemRandom);
+      lookAndFeelMenu.addSeparator();
+      lookAndFeelMenu.add(itemFontIncrease);
+      lookAndFeelMenu.add(itemFontDecrease);
 
       lafButtonGroup = new ButtonGroup(); //only 1 LAF button can be selected at a time
       lafButtonGroupFav = new ButtonGroup();
@@ -782,7 +732,7 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
                      String theme = (String) iterator.next();
                      if (theme.equals(lookFeelTheme)) {
                         initThemeName = lookFeelTheme;
-                        System.out.println("Restoring Theme " + lookFeelTheme);
+                        sc.getLog().consoleLog("Restoring Theme " + lookFeelTheme);
                         alf.setMyTheme(lookFeelTheme);
                         break;
                      }
@@ -798,7 +748,7 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
             //if success here create the current Laf
             LookAndFeel laf = UIManager.getLookAndFeel();
             UIManager.LookAndFeelInfo lafi = new UIManager.LookAndFeelInfo(laf.getName(), lookFeelClassName);
-            currentAction = new LafAction(lafi, lookFeelTheme, null, null);
+            currentAction = new LafAction(ssc, this, lafi, lookFeelTheme, null, null);
          } catch (Exception e) {
             e.printStackTrace();
          }
@@ -809,6 +759,14 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
     * Save LnF current state using {@link Preferences} object loaded at start.
     */
    public void prefsSave() {
+
+      //there is nothing to save if the menu was not opened
+      if (menuRoot.getItemCount() == 0) {
+         //#debug
+         ssc.toDLog().pFlow("Skin menu not actived. No changes to save.", null, SwingSkinManager.class, "prefsSave", ITechLvl.LVL_05_FINE, true);
+         return;
+      }
+
       IPrefs prefs = ssc.getUIPref();
       String value = UIManager.getLookAndFeel().getClass().getName();
       LookAndFeel laf = UIManager.getLookAndFeel();
@@ -838,10 +796,10 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
          JMenuItem ji = menuFav.getItem(i);
          if (ji instanceof JRadioButtonMenuItem) {
             LafAction action = (LafAction) ji.getAction();
-            sb.append(action.laf.getName());
-            if (action.theme != null) {
+            sb.append(action.getInfo().getName());
+            if (action.getTheme() != null) {
                sb.append('.');
-               sb.append(action.theme);
+               sb.append(action.getTheme());
             }
             sb.append(';');
          }
@@ -889,7 +847,8 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
             }
             if (oldDecorated != newDecorated) {
                // Reboot the application
-               System.out.println("Reboot the application " + oldLAF.getName() + " " + oldDecorated + " new " + newLAF.getName() + " " + newDecorated);
+               String message = "Reboot the application " + oldLAF.getName() + " " + oldDecorated + " new " + newLAF.getName() + " " + newDecorated;
+               sc.getLog().consoleLog(message);
             }
             updateComponentTree();
          } catch (Exception e) {
@@ -907,6 +866,19 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
     */
    public void setIconSelected(Icon icon) {
       this.iconSelection = icon;
+   }
+
+   private boolean setLafActionIfMenuItem(Component c) {
+      if (c instanceof JRadioButtonMenuItem) {
+         JRadioButtonMenuItem item = (JRadioButtonMenuItem) c;
+         Action itemAction = item.getAction();
+         if (itemAction instanceof LafAction) {
+            executeSetMyLafTheme((LafAction) itemAction);
+            item.setSelected(true);
+            return true;
+         }
+      }
+      return false;
    }
 
    /**
@@ -927,7 +899,6 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
                break;
             }
          }
-
       }
    }
 
@@ -967,6 +938,32 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
       }
    }
 
+   public IDLog toDLog() {
+      return ssc.toDLog();
+   }
+
+   //#mdebug
+   public String toString() {
+      return Dctx.toString(this);
+   }
+
+   public void toString(Dctx dc) {
+      dc.root(this, "PascalSkinManager");
+   }
+
+   public String toString1Line() {
+      return Dctx.toString1Line(this);
+   }
+
+   public void toString1Line(Dctx dc) {
+      dc.root1Line(this, "PascalSkinManager");
+   }
+
+   public UCtx toStringGetUCtx() {
+      return ssc.getUCtx();
+   }
+   //#enddebug
+
    /**
     * 
     */
@@ -989,53 +986,12 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
       }
    }
 
-   /**
-    * Optional. By default, all widgets have been initialized with English strings.
-    * <br>
-    * Valid bundle with the following keys
-    * <li> {@link SwingSkinManager#BUNDLE_KEY_FAV}
-    * <li> {@link SwingSkinManager#BUNDLE_KEY_FAV_ADD}
-    * <li> {@link SwingSkinManager#BUNDLE_KEY_FAV_REMOVE}
-    * <li> {@link SwingSkinManager#BUNDLE_KEY_MAIN_MENU}
-    * <li> {@link SwingSkinManager#BUNDLE_KEY_OTHERS}
-    * <li> {@link SwingSkinManager#BUNDLE_KEY_SYSTEM}
-    * 
-    * @param resBundle
-    */
-   public void guiUpdate(ResourceBundle resBundle) {
-      menuRoot.setText(resBundle.getString(BUNDLE_KEY_MAIN_MENU));
-      menuOthers.setText(resBundle.getString(BUNDLE_KEY_OTHERS));
-      menuSystem.setText(resBundle.getString(BUNDLE_KEY_SYSTEM));
-      menuFav.setText(resBundle.getString(BUNDLE_KEY_FAV));
-      jmiFavAdd.setText(resBundle.getString(BUNDLE_KEY_FAV_ADD));
-      jmiFavRemove.setText(resBundle.getString(BUNDLE_KEY_FAV_REMOVE));
-
+   public boolean isUsingDefaultKeyShortcuts() {
+      return isUsingDefaultKeyShortcuts;
    }
 
-   //#mdebug
-   public String toString() {
-      return Dctx.toString(this);
+   public void setUsingDefaultKeyShortcuts(boolean isUsingDefaultKeyShortcuts) {
+      this.isUsingDefaultKeyShortcuts = isUsingDefaultKeyShortcuts;
    }
-
-   public void toString(Dctx dc) {
-      dc.root(this, "PascalSkinManager");
-   }
-
-   public IDLog toDLog() {
-      return ssc.toDLog();
-   }
-
-   public String toString1Line() {
-      return Dctx.toString1Line(this);
-   }
-
-   public void toString1Line(Dctx dc) {
-      dc.root1Line(this, "PascalSkinManager");
-   }
-
-   public UCtx toStringGetUCtx() {
-      return ssc.getUCtx();
-   }
-   //#enddebug
 
 }
