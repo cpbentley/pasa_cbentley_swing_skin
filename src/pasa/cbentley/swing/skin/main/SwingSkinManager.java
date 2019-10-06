@@ -5,8 +5,6 @@
  */
 package pasa.cbentley.swing.skin.main;
 
-import static java.awt.event.KeyEvent.VK_R;
-
 import java.awt.Component;
 import java.awt.Frame;
 import java.awt.Window;
@@ -29,11 +27,9 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
 import javax.swing.LookAndFeel;
-import javax.swing.MenuElement;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
@@ -153,6 +149,14 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
 
    private String               initThemeName;
 
+   private boolean              isUsingDefaultKeyShortcuts;
+
+   private BMenuItem            itemFontDecrease;
+
+   private BMenuItem            itemFontIncrease;
+
+   private BMenuItem            itemRandom;
+
    private BMenuItem            jmiFavAdd;
 
    private BMenuItem            jmiFavRemove;
@@ -179,17 +183,9 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
     */
    private ArrayList<LafAction> myLafActions = new ArrayList<>();
 
-   private boolean              isUsingDefaultKeyShortcuts;
-
-   protected final SwingSkinCtx ssc;
-
    protected final SwingCtx     sc;
 
-   private BMenuItem            itemFontIncrease;
-
-   private BMenuItem            itemFontDecrease;
-
-   private BMenuItem            itemRandom;
+   protected final SwingSkinCtx ssc;
 
    /**
     * Upon creation, module looks for installed/accessible look and feels.
@@ -216,32 +212,6 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
 
    }
 
-   private void initMenuMain() {
-      //first build the menu for the system look and feels
-      menuSystem = new BMenu(sc, sSystemLnF);
-      menuOthers = new BMenu(sc, sOthers);
-      menuFav = new BMenu(sc, sFavorite);
-
-      jmiFavRemove = new BMenuItem(sc, this, sRemovefavorite);
-
-      jmiFavAdd = new BMenuItem(sc, this, sAddfavorite);
-
-      itemFontIncrease = new BMenuItem(sc, this, sFontIncrease);
-      itemFontDecrease = new BMenuItem(sc, this, sFontDecrease);
-      itemRandom = new BMenuItem(sc, this, sRandom);
-
-      if (isUsingDefaultKeyShortcuts) {
-         itemFontIncrease.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, modAlt));
-         itemFontDecrease.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, modAlt));
-         itemRandom.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, modAlt));
-      }
-
-      menuFav.add(jmiFavAdd);
-      menuFav.add(jmiFavRemove);
-      menuFav.addSeparator();
-
-   }
-
    /**
     * The LookAndFeel changes are processed by {@link LafAction#actionPerformed(ActionEvent)}
     * <br>
@@ -258,47 +228,6 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
          cmdFontSizeIncrease();
       } else if (src == itemRandom) {
          cmdRandomSet();
-      }
-   }
-
-   public void cmdFavoriteRemove() {
-      JMenuItem item = getActionFavMatch(currentAction);
-      if (item != null) {
-         lafButtonGroupFav.remove(item);
-         lafButtonGroupFav.clearSelection();
-         menuFav.remove(item);
-         menuFav.setIcon(null);
-         menuFav.repaint();
-         //update the favorite string
-
-         prefsSave();
-      }
-   }
-
-   public void cmdFavoriteAdd() {
-      //get current
-      if (currentAction != null) {
-         //check if already in the list
-         JMenuItem item = getActionFavMatch(currentAction);
-         if (item == null) {
-            //create a new lafaction with menufav as root menu
-            LookAndFeelInfo laf = currentAction.getInfo();
-            AbstractLookAndFeel alf = currentAction.getAbstractLookAndFeel();
-            String theme = currentAction.getTheme();
-            LafAction lafAction = new LafAction(ssc, this, laf, theme, alf, menuFav);
-            //not in the list
-            JRadioButtonMenuItem rbm = new JRadioButtonMenuItem(lafAction);
-            lafButtonGroupFav.add(rbm);
-            menuFav.add(rbm);
-            menuFav.setIcon(iconSelection);
-            //refresh
-            lafButtonGroupFav.clearSelection();
-            rbm.setSelected(true);
-            menuFav.repaint();
-         }
-
-         //save on the spot
-         prefsSave();
       }
    }
 
@@ -350,18 +279,56 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
       }
    }
 
-   public void cmdRandomSet() {
+   public void cmdFavoriteAdd() {
+      //get current
       if (currentAction != null) {
-         checkPopulateRootMenu(); //make sure actions are loaded
-         int rIndex = ssc.getUCtx().getRandom().nextInt(myLafActions.size());
-         LafAction action = myLafActions.get(rIndex);
-         executeSetMyLafTheme(action);
-         syncReal(action); //sync the ui for new action
+         //check if already in the list
+         JMenuItem item = getActionFavMatch(currentAction);
+         if (item == null) {
+            //create a new lafaction with menufav as root menu
+            LookAndFeelInfo laf = currentAction.getInfo();
+            AbstractLookAndFeel alf = currentAction.getAbstractLookAndFeel();
+            String theme = currentAction.getTheme();
+            LafAction lafAction = new LafAction(ssc, this, laf, theme, alf, menuFav);
+            //not in the list
+            JRadioButtonMenuItem rbm = new JRadioButtonMenuItem(lafAction);
+            lafButtonGroupFav.add(rbm);
+            menuFav.add(rbm);
+            menuFav.setIcon(iconSelection);
+            //refresh
+            lafButtonGroupFav.clearSelection();
+            rbm.setSelected(true);
+            menuFav.repaint();
+         }
+
+         //save on the spot
+         prefsSave();
+      }
+   }
+
+   public void cmdFavoriteRemove() {
+      JMenuItem item = getActionFavMatch(currentAction);
+      if (item != null) {
+         lafButtonGroupFav.remove(item);
+         lafButtonGroupFav.clearSelection();
+         menuFav.remove(item);
+         menuFav.setIcon(null);
+         menuFav.repaint();
+         //update the favorite string
+
+         prefsSave();
       }
    }
 
    public boolean cmdFontSizeDecrease() {
       return cmdFontSizeZipOver(1);
+   }
+
+   /**
+    * Try to increase Font size of look and feel if possible
+    */
+   public boolean cmdFontSizeIncrease() {
+      return cmdFontSizeZipOver(0);
    }
 
    /**
@@ -398,11 +365,14 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
       return false;
    }
 
-   /**
-    * Try to increase Font size of look and feel if possible
-    */
-   public boolean cmdFontSizeIncrease() {
-      return cmdFontSizeZipOver(0);
+   public void cmdRandomSet() {
+      if (currentAction != null) {
+         checkPopulateRootMenu(); //make sure actions are loaded
+         int rIndex = ssc.getUCtx().getRandom().nextInt(myLafActions.size());
+         LafAction action = myLafActions.get(rIndex);
+         executeSetMyLafTheme(action);
+         syncReal(action); //sync the ui for new action
+      }
    }
 
    /**
@@ -542,7 +512,33 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
    public void guiUpdate() {
       //nothing to do since all ui components are automatically updated
    }
-   
+
+   private void initMenuMain() {
+      //first build the menu for the system look and feels
+      menuSystem = new BMenu(sc, sSystemLnF);
+      menuOthers = new BMenu(sc, sOthers);
+      menuFav = new BMenu(sc, sFavorite);
+
+      jmiFavRemove = new BMenuItem(sc, this, sRemovefavorite);
+
+      jmiFavAdd = new BMenuItem(sc, this, sAddfavorite);
+
+      itemFontIncrease = new BMenuItem(sc, this, sFontIncrease);
+      itemFontDecrease = new BMenuItem(sc, this, sFontDecrease);
+      itemRandom = new BMenuItem(sc, this, sRandom);
+
+      if (isUsingDefaultKeyShortcuts) {
+         itemFontIncrease.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, modAlt));
+         itemFontDecrease.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, modAlt));
+         itemRandom.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, modAlt));
+      }
+
+      menuFav.add(jmiFavAdd);
+      menuFav.add(jmiFavRemove);
+      menuFav.addSeparator();
+
+   }
+
    /**
     * Put the LnF that work well here
     */
@@ -569,6 +565,10 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
          UIManager.installLookAndFeel(title, classPath);
       } catch (ClassNotFoundException e) {
       }
+   }
+
+   public boolean isUsingDefaultKeyShortcuts() {
+      return isUsingDefaultKeyShortcuts;
    }
 
    /**
@@ -885,6 +885,10 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
       return false;
    }
 
+   public void setUsingDefaultKeyShortcuts(boolean isUsingDefaultKeyShortcuts) {
+      this.isUsingDefaultKeyShortcuts = isUsingDefaultKeyShortcuts;
+   }
+
    /**
     * Called when a regular Skin is changed. Look up the favorites
     * and if its inside.. select it in the group
@@ -942,11 +946,11 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
       }
    }
 
+   //#mdebug
    public IDLog toDLog() {
       return ssc.toDLog();
    }
 
-   //#mdebug
    public String toString() {
       return Dctx.toString(this);
    }
@@ -988,14 +992,6 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
             }
          }
       }
-   }
-
-   public boolean isUsingDefaultKeyShortcuts() {
-      return isUsingDefaultKeyShortcuts;
-   }
-
-   public void setUsingDefaultKeyShortcuts(boolean isUsingDefaultKeyShortcuts) {
-      this.isUsingDefaultKeyShortcuts = isUsingDefaultKeyShortcuts;
    }
 
 }
