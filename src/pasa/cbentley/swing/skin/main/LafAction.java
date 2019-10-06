@@ -47,6 +47,11 @@ public class LafAction extends AbstractAction {
       this.ssc = ssc;
       this.ssm = ssm;
       this.laf = laf;
+      //#mdebug
+      if(menu == null) {
+         throw new NullPointerException();
+      }
+      //#enddebug
       this.menu = menu;
    }
 
@@ -65,6 +70,11 @@ public class LafAction extends AbstractAction {
       this.laf = laf;
       this.theme = theme;
       this.alf = alf;
+      //#mdebug
+      if(menu == null) {
+         throw new NullPointerException();
+      }
+      //#enddebug
       this.menu = menu;
    }
 

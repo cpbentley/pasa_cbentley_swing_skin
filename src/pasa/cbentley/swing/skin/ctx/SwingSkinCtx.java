@@ -20,6 +20,10 @@ public class SwingSkinCtx extends ACtx {
       return sc;
    }
 
+   /**
+    * Will not be null
+    * @return
+    */
    public IPrefs getUIPref() {
       return sc.getPrefs();
    }

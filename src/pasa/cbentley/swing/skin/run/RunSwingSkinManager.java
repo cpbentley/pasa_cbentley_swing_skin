@@ -80,9 +80,10 @@ public class RunSwingSkinManager extends RunSwingAbstract {
       sc.setResMissingLog(true);
 
       lfm = new SwingSkinManager(ssc);
-
       lfm.setUsingDefaultKeyShortcuts(true);
-
+      lfm.setDefault("com.jtattoo.plaf.mint.MintLookAndFeel", "Medium-Font");
+      lfm.prefsInit();
+      
       lfm.setIconSelected(new Icon() {
          public int getIconHeight() {
             return 16;
@@ -139,6 +140,13 @@ public class RunSwingSkinManager extends RunSwingAbstract {
             lfm.cmdFontSizeDecrease();
          }
       });
+      final JMenuItem prefsQuit = new JMenuItem("Clear Preferences And Quit");
+      prefsQuit.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            sc.getPrefs().clear();
+            System.exit(0);
+         }
+      });
       ButtonGroup group = new ButtonGroup();
       group.add(jiDecorated);
       group.add(jiUndecorated);
@@ -147,7 +155,9 @@ public class RunSwingSkinManager extends RunSwingAbstract {
       jm.addSeparator();
       jm.add(fontIncrease);
       jm.add(fontDecrease);
-
+      jm.addSeparator();
+      jm.add(prefsQuit);
+      
       menuBar.add(jm);
       frame.setJMenuBar(menuBar);
 

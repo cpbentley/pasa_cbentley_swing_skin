@@ -81,50 +81,15 @@ import pasa.cbentley.swing.widgets.b.BMenuItem;
  * <b>String Localization</b>
  * <br>
  * By default, English Strings are hardcoded by default.<br>
- * A real application will call the {@link SwingSkinManager#guiUpdate(ResourceBundle)}.
+ * A real application will call the {@link SwingSkinManager#guiUpdate())}.
  * <br>
  * <br>
- * The {@link ResourceBundle} must have the following keys
- * <li> {@link SwingSkinManager#BUNDLE_KEY_FAV}
- * <li> {@link SwingSkinManager#BUNDLE_KEY_FAV_ADD}
- * <li> {@link SwingSkinManager#BUNDLE_KEY_FAV_REMOVE}
- * <li> {@link SwingSkinManager#BUNDLE_KEY_MAIN_MENU}
- * <li> {@link SwingSkinManager#BUNDLE_KEY_OTHERS}
- * <li> {@link SwingSkinManager#BUNDLE_KEY_SYSTEM}
  * </p>
  * @author Charles Bentley
  * @version 1.0
  *
  */
 public class SwingSkinManager implements ActionListener, MenuListener, IStringable, ITechStringsSwingSkin, ITechPrefsSwingSkin, ITechMenu {
-
-   public class LafCombo {
-
-      private String name;
-
-      private String path;
-
-      public LafCombo(String path, String name) {
-         this.setPath(path);
-         this.setName(name);
-      }
-
-      public String getName() {
-         return name;
-      }
-
-      public String getPath() {
-         return path;
-      }
-
-      public void setName(String name) {
-         this.name = name;
-      }
-
-      public void setPath(String path) {
-         this.path = path;
-      }
-   }
 
    /**
     * Current active Laf as an {@link Action}.
@@ -145,9 +110,9 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
    /**
     * Will keep the first look and feel from start.
     */
-   private String               initLookClassName;
+   private String               initNameLookFeelClass;
 
-   private String               initThemeName;
+   private String               initNameTheme;
 
    private boolean              isUsingDefaultKeyShortcuts;
 
@@ -187,6 +152,14 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
 
    protected final SwingSkinCtx ssc;
 
+   private String               defaultLook;
+
+   private LookAndFeelInfo      initLooAndFeelInfo;
+
+   private MouseSkinListener    mouseListener;
+
+   private String               defaultTheme;
+
    /**
     * Upon creation, module looks for installed/accessible look and feels.
     * 
@@ -194,21 +167,6 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
    public SwingSkinManager(SwingSkinCtx ssc) {
       this.ssc = ssc;
       this.sc = ssc.getSwingCtx();
-      //the very first thing we need to do is read the preference and set the look and feel
-      prefsInit();
-
-      //the initialization of menu must be done after the lookandfeel preference has been loaded
-      //otherwise the first look for those menu will be metal
-      menuRoot = new BMenu(sc, sMainMenu);
-      menuRoot.setMnemonic(KeyEvent.VK_K);
-      menuRoot.addMenuListener(this); //if menu activated with the keyboard
-      //when using the most common case.. use a thread to smooth out user experience
-      menuRoot.addMouseListener(new MouseAdapter() {
-         public void mouseEntered(MouseEvent e) {
-            //do this check in a SwingWorker
-            checkPopulateRootMenu();
-         }
-      });
 
    }
 
@@ -247,7 +205,7 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
 
       myLafActions.add(action);
       JRadioButtonMenuItem buttonLaf = new JRadioButtonMenuItem(action);
-      if (lafClassName.equals(initLookClassName) && initThemeName == null) {
+      if (lafClassName.equals(initNameLookFeelClass) && initNameTheme == null) {
          action.getActionRootMenu().setIcon(iconSelection);
          buttonLaf.setSelected(true);
          currentAction = action;
@@ -272,7 +230,7 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
       }
    }
 
-   private void checkPopulateRootMenu() {
+   public void checkPopulateRootMenu() {
       if (menuRoot.getItemCount() == 0) {
          populateLookAndFeelMenu(menuRoot);
          sc.guiUpdateOnChildrenMenu(menuRoot);
@@ -506,11 +464,22 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
     * @return
     */
    public JMenu getRootMenu() {
+      if (menuRoot == null) {
+         //the initialization of menu must be done after the lookandfeel preference has been loaded
+         //otherwise the first look for those menu will be metal
+         menuRoot = new BMenu(sc, sMainMenu);
+         menuRoot.setMnemonic(KeyEvent.VK_K);
+
+         //when using the most common case.. use a thread to smooth out user experience
+         mouseListener = new MouseSkinListener(ssc, this);
+         menuRoot.addMouseListener(mouseListener);
+      }
       return menuRoot;
    }
 
    public void guiUpdate() {
       //nothing to do since all ui components are automatically updated
+
    }
 
    private void initMenuMain() {
@@ -571,6 +540,11 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
       return isUsingDefaultKeyShortcuts;
    }
 
+   public void setDefault(String string, String theme) {
+      this.defaultLook = string;
+      this.defaultTheme = theme;
+   }
+
    /**
     * Called last when lazily populating the Skin root menu
     * <br>
@@ -602,7 +576,7 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
                   }
                   //check if init theme and the set cu
                   String className = actionRegular.getInfo().getClassName();
-                  if (className.equals(initLookClassName) && theme.equals(initThemeName)) {
+                  if (className.equals(initNameLookFeelClass) && theme.equals(initNameTheme)) {
                      currentActionFav = actionFav;
                      currentActionFav.getActionRootMenu().setIcon(iconSelection);
                   }
@@ -647,6 +621,8 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
       //we create LafActions for all installed look and feels and their themes
       createActions(lafsInstalled);
 
+      //
+
       //add the favorite menu
       lookAndFeelMenu.add(menuFav);
       lookAndFeelMenu.add(menuSystem);
@@ -685,7 +661,7 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
                   //get the action
                   LafAction action = getAction(lafName, theme);
                   menu = action.getActionRootMenu();
-                  if (lafClassName.equals(initLookClassName) && theme.equals(initThemeName)) {
+                  if (lafClassName.equals(initNameLookFeelClass) && theme.equals(initNameTheme)) {
                      menu.setIcon(iconSelection);
                      buttonTheme.setSelected(true);
                      currentAction = action;
@@ -721,11 +697,25 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
 
    }
 
-   private void prefsInit() {
+   /**
+    * All Swing components initialized before this call will have the default system LnF.
+    * 
+    * Called once the {@link SwingSkinManager} has been configured.
+    * 
+    * It will create {@link LafAction} for the 
+    */
+   public void prefsInit() {
       IPrefs prefs = ssc.getUIPref();
       String lookFeelClassName = prefs.get(PREF_LOOKANDFEEL, "");
       String lookFeelTheme = prefs.get(PREF_LOOKANDFEEL_THEME, "");
-      if (!lookFeelClassName.equals("")) {
+
+      boolean isPrefLookFeelEmpty = lookFeelClassName.equals("");
+      if (isPrefLookFeelEmpty && defaultLook != null) {
+         lookFeelClassName = defaultLook;
+         lookFeelTheme = defaultTheme;
+         isPrefLookFeelEmpty = false;
+      }
+      if (!isPrefLookFeelEmpty) {
          try {
             if (lookFeelClassName.startsWith("com.jtattoo.plaf")) {
                if (!lookFeelTheme.equals("")) {
@@ -735,7 +725,7 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
                   for (Iterator iterator = listThemes.iterator(); iterator.hasNext();) {
                      String theme = (String) iterator.next();
                      if (theme.equals(lookFeelTheme)) {
-                        initThemeName = lookFeelTheme;
+                        initNameTheme = lookFeelTheme;
                         sc.getLog().consoleLog("Restoring Theme " + lookFeelTheme);
                         alf.setMyTheme(lookFeelTheme);
                         break;
@@ -743,7 +733,7 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
                   }
                }
             }
-            initLookClassName = lookFeelClassName;
+            initNameLookFeelClass = lookFeelClassName;
             //#debug
             toDLog().pFlow("Restoring Look and Feel " + lookFeelClassName, this, SwingSkinManager.class, "prefsInit", ITechLvl.LVL_05_FINE, true);
             //System.out.println("Restoring Look and Feel " + lookFeelClassName);
@@ -751,8 +741,7 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
 
             //if success here create the current Laf
             LookAndFeel laf = UIManager.getLookAndFeel();
-            UIManager.LookAndFeelInfo lafi = new UIManager.LookAndFeelInfo(laf.getName(), lookFeelClassName);
-            currentAction = new LafAction(ssc, this, lafi, lookFeelTheme, null, null);
+            initLooAndFeelInfo = new UIManager.LookAndFeelInfo(laf.getName(), lookFeelClassName);
          } catch (Exception e) {
             e.printStackTrace();
          }
