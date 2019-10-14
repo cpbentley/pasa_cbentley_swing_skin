@@ -751,7 +751,7 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
    public void prefsSave() {
 
       //there is nothing to save if the menu was not opened
-      if (menuRoot.getItemCount() == 0) {
+      if (menuRoot == null || menuRoot.getItemCount() == 0) {
          //#debug
          ssc.toDLog().pFlow("Skin menu not actived. No changes to save.", null, SwingSkinManager.class, "prefsSave", ITechLvl.LVL_05_FINE, true);
          return;
