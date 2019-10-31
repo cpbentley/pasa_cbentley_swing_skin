@@ -141,6 +141,8 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
 
    private BMenu                menuRoot;
 
+   private BMenu                menuFlat;
+
    private BMenu                menuSystem;
 
    /**
@@ -356,6 +358,13 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
             } catch (Exception e) {
                e.printStackTrace();
             }
+         } else if (lafClassName.startsWith("com.formdev.flatlaf")) {
+            //no themes here yet
+            if (menuFlat == null) {
+               menuFlat = new BMenu(sc, sFlat);
+            }
+            LafAction action = new LafAction(ssc, this, laf, menuFlat);
+            myLafActions.add(action);
          } else {
             JMenu menu = null;
             if (lafClassName.startsWith("javax.swing.plaf") || lafClassName.startsWith("com.sun.java")) {
@@ -526,6 +535,12 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
       installTry("com.jtattoo.plaf.noire.NoireLookAndFeel", "Noire");
       installTry("com.jtattoo.plaf.smart.SmartLookAndFeel", "Smart");
       installTry("com.jtattoo.plaf.texture.TextureLookAndFeel", "Texture");
+
+      installTry("com.formdev.flatlaf.FlatLightLaf", "Flat Light");
+      installTry("com.formdev.flatlaf.FlatIntelliJLaf", "Flat IntelliJ");
+      installTry("com.formdev.flatlaf.FlatDarkLaf", "Flat Dark");
+      installTry("com.formdev.flatlaf.FlatDarculaLaf", "Flat Dracula");
+
    }
 
    private void installTry(String classPath, String title) {
@@ -687,6 +702,10 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
          lastLafClassName = lafClassName;
       }
 
+      if (menuFlat != null) {
+         lookAndFeelMenu.add(menuFlat);
+      }
+      
       if (menuOthers.getItemCount() != 0) {
          lookAndFeelMenu.add(menuOthers);
       }

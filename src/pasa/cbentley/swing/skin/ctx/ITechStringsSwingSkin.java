@@ -13,13 +13,15 @@ public interface ITechStringsSwingSkin extends ITech {
 
    public static final String sFavorite       = "lookandfeel.favorite";
 
-   public static final String sMainMenu           = "lookandfeel.main";
+   public static final String sFlat           = "lookandfeel.flat";
+
+   public static final String sMainMenu       = "lookandfeel.main";
 
    public static final String sOthers         = "lookandfeel.others";
 
    public static final String sRemovefavorite = "lookandfeel.removefavorite";
 
-   public static final String sSystemLnF         = "lookandfeel.system";
+   public static final String sSystemLnF      = "lookandfeel.system";
 
    public static final String sRandom         = "lookandfeel.random";
 

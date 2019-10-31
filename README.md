@@ -24,7 +24,7 @@ You don't have to look anywhere.
 
 Its all here sourced on github repositories. 
 
-#### Github Repository Dependencies
+## Github Repository Dependencies
 
 It uses the pasa_cbentley_swing dependency graph
 
@@ -43,7 +43,7 @@ num | id | Right Click -> Copy Link Address
 1 | pasa_jtattoo | [Import Link](https://github.com/cpbentley/pasa_jtattoo)
 2 | JFormDesigner_FlatLaf | [Import Link](https://github.com/cpbentley/JFormDesigner_FlatLaf)
 
-#### How to import in Eclipse
+## How to import in Eclipse
 
 **Basics**
 
@@ -57,7 +57,7 @@ num | id | Right Click -> Copy Link Address
 
 **Specifics**
 
-* Import the github repositories listed above/below. Following the given order, you should not see any compilation errors.
+* Import the **github repositories** listed above. Following the given order, you should not see any compilation errors.
 
   1. Right click on link and copy link to clipboard
   2. In Eclipse, use the menu File -> Import
