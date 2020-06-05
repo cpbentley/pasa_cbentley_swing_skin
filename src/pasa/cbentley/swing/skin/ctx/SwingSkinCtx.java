@@ -32,4 +32,7 @@ public class SwingSkinCtx extends ACtx {
       list.add("i18nSwingSkin");
    }
 
+   public int getCtxID() {
+      return 445;
+   }
 }
