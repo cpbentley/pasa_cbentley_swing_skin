@@ -1,7 +1,6 @@
 /*
- * (c) 2018-2019 Charles-Philip Bentley
- * This code is licensed under CC by-nc-nd 4.0 (see LICENSE.txt for details)
- * Contact author for uses outside of the NonCommercial-NoDerivatives clauses.   
+ * (c) 2018-2020 Charles-Philip Bentley
+ * This code is licensed under MIT license (see LICENSE.txt for details)
  */
 package pasa.cbentley.swing.skin.main;
 
