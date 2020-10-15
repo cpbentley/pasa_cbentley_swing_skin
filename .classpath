@@ -10,5 +10,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/pasa_jtattoo"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/JFormDesigner_FlatLaf"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/pasa_cbentley_core_j2se"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/pasa_cbentley_core_swing"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
