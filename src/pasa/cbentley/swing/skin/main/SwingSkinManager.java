@@ -327,7 +327,7 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
    public void cmdRandomSet() {
       if (currentAction != null) {
          checkPopulateRootMenu(); //make sure actions are loaded
-         int rIndex = ssc.getUCtx().getRandom().nextInt(myLafActions.size());
+         int rIndex = ssc.getUC().getRandom().nextInt(myLafActions.size());
          LafAction action = myLafActions.get(rIndex);
          executeSetMyLafTheme(action);
          syncReal(action); //sync the ui for new action
@@ -972,7 +972,7 @@ public class SwingSkinManager implements ActionListener, MenuListener, IStringab
    }
 
    public UCtx toStringGetUCtx() {
-      return ssc.getUCtx();
+      return ssc.getUC();
    }
    //#enddebug
 

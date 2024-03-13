@@ -16,7 +16,7 @@ public class SwingSkinCtx extends ACtx {
    protected final SwingCtx sc;
 
    public SwingSkinCtx(SwingCtx sc) {
-      super(sc.getUCtx());
+      super(sc.getUC());
       this.sc = sc;
    }
 
